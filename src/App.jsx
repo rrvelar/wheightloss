@@ -2,8 +2,44 @@ import { useState } from "react";
 import { ethers } from "ethers";
 
 const EXPECTED_CHAIN_ID = 8453;
-const contractAddress = "0xYourBaseContractAddressHere"; // вставь сюда адрес контракта
-const abi = [/* вставь сюда ABI */];
+const contractAddress = "0xDe65B2b24558Ef18B923D31E9E6be966b9e3b0Bd"; // вставь сюда адрес контракта
+const abi = [
+  {
+    "inputs": [
+      { "internalType": "uint16", "name": "weightKg", "type": "uint16" },
+      { "internalType": "uint32", "name": "steps", "type": "uint32" },
+      { "internalType": "uint16", "name": "caloriesIn", "type": "uint16" },
+      { "internalType": "uint16", "name": "caloriesOut", "type": "uint16" },
+      { "internalType": "string", "name": "note", "type": "string" }
+    ],
+    "name": "addEntry",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMyEntries",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "uint16", "name": "weightKg", "type": "uint16" },
+          { "internalType": "uint32", "name": "steps", "type": "uint32" },
+          { "internalType": "uint16", "name": "caloriesIn", "type": "uint16" },
+          { "internalType": "uint16", "name": "caloriesOut", "type": "uint16" },
+          { "internalType": "string", "name": "note", "type": "string" }
+        ],
+        "internalType": "struct WeightLossDiary.Entry[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
 
 export default function App() {
   const [account, setAccount] = useState("");
