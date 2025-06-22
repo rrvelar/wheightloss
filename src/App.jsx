@@ -54,41 +54,52 @@ export default function App() {
   });
 
   const connect = async () => {
-    if (!window.ethereum) return alert("Установите MetaMask");
+    try {
+      if (!window.ethereum) return alert("Установите MetaMask");
 
-    const provider = new BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const network = await provider.getNetwork();
-    const chainId = Number(network.chainId);
-    if (chainId !== EXPECTED_CHAIN_ID) {
-      return alert("Пожалуйста, переключитесь на сеть Base (Chain ID 8453)");
+      const provider = new BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const network = await provider.getNetwork();
+      const chainId = Number(network.chainId);
+      if (chainId !== EXPECTED_CHAIN_ID) {
+        return alert("Переключитесь на сеть Base (Chain ID 8453)");
+      }
+
+      const signer = await provider.getSigner();
+      const ct = new Contract(contractAddress, abi, signer);
+      const accs = await provider.listAccounts();
+
+      setAccount(accs[0]);
+      setContract(ct);
+
+      const all = await ct.getMyEntries();
+      setEntries(all);
+    } catch (err) {
+      console.error("Ошибка при подключении:", err);
+      alert("Ошибка при подключении к MetaMask");
     }
-
-    const signer = await provider.getSigner();
-    const ct = new Contract(contractAddress, abi, signer);
-    const accs = await provider.listAccounts();
-
-    setAccount(accs[0]);
-    setContract(ct);
-
-    const all = await ct.getMyEntries();
-    setEntries(all);
   };
 
   const submit = async () => {
     if (!contract) return alert("Сначала подключитесь к MetaMask");
     const { weightKg, steps, caloriesIn, caloriesOut, note } = form;
-    const tx = await contract.addEntry(
-      parseInt(weightKg),
-      parseInt(steps),
-      parseInt(caloriesIn),
-      parseInt(caloriesOut),
-      note
-    );
-    await tx.wait();
-    const updated = await contract.getMyEntries();
-    setEntries(updated);
-    setForm({ weightKg: "", steps: "", caloriesIn: "", caloriesOut: "", note: "" });
+
+    try {
+      const tx = await contract.addEntry(
+        parseInt(weightKg),
+        parseInt(steps),
+        parseInt(caloriesIn),
+        parseInt(caloriesOut),
+        note
+      );
+      await tx.wait();
+      const updated = await contract.getMyEntries();
+      setEntries(updated);
+      setForm({ weightKg: "", steps: "", caloriesIn: "", caloriesOut: "", note: "" });
+    } catch (err) {
+      console.error("Ошибка при добавлении записи:", err);
+      alert("Ошибка при добавлении записи");
+    }
   };
 
   return (
@@ -98,7 +109,7 @@ export default function App() {
       {!account ? (
         <button onClick={connect}>Подключить MetaMask</button>
       ) : (
-        <div>Подключено: {account}</div>
+        <p>Подключено: {account}</p>
       )}
 
       {account && (
@@ -117,7 +128,7 @@ export default function App() {
           <div>
             <textarea
               name="note"
-              placeholder="note"
+              placeholder="Заметка"
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
             />
@@ -128,7 +139,7 @@ export default function App() {
           <ul>
             {entries.map((e, i) => (
               <li key={i}>
-                {new Date(e.timestamp * 1000).toLocaleDateString()}: {e.weightKg} кг, {e.steps} шагов, калорий {e.caloriesIn}/{e.caloriesOut}, заметка: {e.note}
+                {new Date(e.timestamp * 1000).toLocaleDateString()}: {e.weightKg} кг, {e.steps} шагов, калории {e.caloriesIn}/{e.caloriesOut}, заметка: {e.note}
               </li>
             ))}
           </ul>
