@@ -4,14 +4,62 @@ import { BrowserProvider, Contract } from "ethers";
 const EXPECTED_CHAIN_ID = 8453;
 const contractAddress = "0xDe65B2b24558Ef18B923D31E9E6be966b9e3b0Bd";
 
-const abi = [ /* сокращён ради читаемости, тот же, как выше */ ];
+const abi = [
+  {
+    "inputs": [
+      { "internalType": "uint16", "name": "weightKg", "type": "uint16" },
+      { "internalType": "uint32", "name": "steps", "type": "uint32" },
+      { "internalType": "uint16", "name": "caloriesIn", "type": "uint16" },
+      { "internalType": "uint16", "name": "caloriesOut", "type": "uint16" },
+      { "internalType": "string", "name": "note", "type": "string" }
+    ],
+    "name": "addEntry",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMyEntries",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "uint16", "name": "weightKg", "type": "uint16" },
+          { "internalType": "uint32", "name": "steps", "type": "uint32" },
+          { "internalType": "uint16", "name": "caloriesIn", "type": "uint16" },
+          { "internalType": "uint16", "name": "caloriesOut", "type": "uint16" },
+          { "internalType": "string", "name": "note", "type": "string" }
+        ],
+        "internalType": "struct WeightLossDiary.Entry[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "EntryAdded",
+    "type": "event"
+  }
+];
 
 export default function App() {
   const [account, setAccount] = useState("");
   const [contract, setContract] = useState(null);
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState({
-    weightKg: "", steps: "", caloriesIn: "", caloriesOut: "", note: ""
+    weightKg: "",
+    steps: "",
+    caloriesIn: "",
+    caloriesOut: "",
+    note: ""
   });
 
   const connect = async () => {
