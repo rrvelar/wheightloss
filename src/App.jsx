@@ -1,9 +1,7 @@
-import { useState } from "react";
-import { BrowserProvider, Contract } from "ethers";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
-const EXPECTED_CHAIN_ID = 8453;
 const contractAddress = "0xDe65B2b24558Ef18B923D31E9E6be966b9e3b0Bd";
-
 const abi = [
   {
     "inputs": [
@@ -38,117 +36,52 @@ const abi = [
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
-    ],
-    "name": "EntryAdded",
-    "type": "event"
   }
 ];
 
-export default function App() {
-  const [account, setAccount] = useState("");
-  const [contract, setContract] = useState(null);
+function App() {
+  const [account, setAccount] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [form, setForm] = useState({
-    weightKg: "",
-    steps: "",
-    caloriesIn: "",
-    caloriesOut: "",
-    note: ""
-  });
 
-  const connect = async () => {
-    try {
-      if (!window.ethereum) return alert("Установите MetaMask");
-      const provider = new BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      const network = await provider.getNetwork();
-      if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-        return alert("Переключитесь на сеть Base (Chain ID 8453)");
-      }
+  const connectWallet = async () => {
+    if (!window.ethereum) return alert("Установите MetaMask");
 
-      const signer = await provider.getSigner();
-      const ct = new Contract(contractAddress, abi, signer);
-      const accounts = await provider.listAccounts();
-      const user = accounts[0];
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
+    const { chainId } = await provider.getNetwork();
 
-      const all = await ct.getMyEntries();
-      setAccount(user);
-      setContract(ct);
-      setEntries(all);
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка при подключении");
+    if (chainId !== 8453) {
+      return alert("Пожалуйста, переключитесь на сеть Base (Chain ID 8453)");
     }
-  };
 
-  const submit = async () => {
-    if (!contract) return;
-    const { weightKg, steps, caloriesIn, caloriesOut, note } = form;
-
-    try {
-      const tx = await contract.addEntry(
-        Number(weightKg),
-        Number(steps),
-        Number(caloriesIn),
-        Number(caloriesOut),
-        note
-      );
-      await tx.wait();
-      const updated = await contract.getMyEntries();
-      setEntries(updated);
-      setForm({ weightKg: "", steps: "", caloriesIn: "", caloriesOut: "", note: "" });
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка при добавлении записи");
-    }
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+    const data = await contract.getMyEntries();
+    setEntries(data);
+    setAccount(address);
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "2rem auto", fontFamily: "Arial" }}>
+    <div>
       <h1>Weight Loss Diary</h1>
-
       {!account ? (
-        <button onClick={connect}>Подключить MetaMask</button>
+        <button onClick={connectWallet}>Подключить MetaMask</button>
       ) : (
-        <p>Вы вошли как: {account}</p>
-      )}
-
-      {account && (
-        <>
-          {["weightKg", "steps", "caloriesIn", "caloriesOut"].map((key) => (
-            <input
-              key={key}
-              type="number"
-              placeholder={key}
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              style={{ display: "block", marginBottom: "8px" }}
-            />
-          ))}
-          <textarea
-            placeholder="Заметка"
-            value={form.note}
-            onChange={(e) => setForm({ ...form, note: e.target.value })}
-            style={{ width: "100%", height: "60px", marginBottom: "10px" }}
-          />
-          <button onClick={submit}>Добавить</button>
-
-          <h2 style={{ marginTop: "2rem" }}>Ваши записи</h2>
+        <div>
+          <p>Подключено: {account}</p>
           <ul>
-            {entries.map((e, i) => (
-              <li key={i}>
-                {new Date(Number(e.timestamp) * 1000).toLocaleDateString()}: {e.weightKg} кг, {e.steps} шагов, калории {e.caloriesIn}/{e.caloriesOut}, заметка: {e.note}
+            {entries.map((entry, idx) => (
+              <li key={idx}>
+                {new Date(Number(entry.timestamp) * 1000).toLocaleDateString()} — Вес: {entry.weightKg} кг, Шаги: {entry.steps}, Калории: +{entry.caloriesIn} / -{entry.caloriesOut}
+                <br />
+                Заметка: {entry.note}
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
     </div>
   );
 }
+
+export default App;
