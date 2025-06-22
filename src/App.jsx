@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BrowserProvider, Contract } from "ethers";
 
-const EXPECTED_CHAIN_ID = 8453; // Base
+const EXPECTED_CHAIN_ID = 8453;
 const contractAddress = "0xDe65B2b24558Ef18B923D31E9E6be966b9e3b0Bd";
 
 const abi = [
@@ -54,11 +54,12 @@ export default function App() {
   });
 
   const connect = async () => {
-    if (!window.ethereum) return alert("Установи MetaMask");
+    if (!window.ethereum) return alert("Установите MetaMask");
 
     const provider = new BrowserProvider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
-    const { chainId } = await provider.getNetwork();
+    const network = await provider.getNetwork();
+    const chainId = Number(network.chainId);
     if (chainId !== EXPECTED_CHAIN_ID) {
       return alert("Пожалуйста, переключитесь на сеть Base (Chain ID 8453)");
     }
